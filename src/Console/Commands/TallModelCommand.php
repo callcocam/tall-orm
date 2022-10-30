@@ -4,7 +4,7 @@
 * User: callcocam@gmail.com, contato@sigasmart.com.br
 * https://www.sigasmart.com.br
 */
-namespace Tall\Cms\Console\Commands;
+namespace Tall\Orm\Console\Commands;
 
 use Illuminate\Console\Command;
 
