@@ -1,0 +1,27 @@
+{
+    "name": "callcocam/tall-orm",
+    "type": "package",
+    "description": "Pacote base para os cruds do banco de dados laravel model.",
+    "keywords": ["framework", "laravel", "livewire", "alpinejs", "tailwindcss"],
+    "license": "MIT",
+    "require": {
+        "php": "^7.3|^8.0",
+        "callcocam/tall-sluggable": "dev-main",
+        "callcocam/tall-schema": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tall\\Orm\\": "src"
+        }
+    },
+    
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Tall\\Orm\\Providers\\OrmServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
