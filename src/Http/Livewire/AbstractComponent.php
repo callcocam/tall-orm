@@ -53,4 +53,17 @@ abstract class AbstractComponent extends Component
         ->with($this->data())
         ->layout($this->layout(), $this->layoutData());
     }
+
+    
+    public function geGroupUpdatedOrder()
+    {
+       return [];
+    }
+    
+    public function setGroupUpdatedOrder($data)
+    {
+        $orders = explode("|", $data);
+        $orders = array_filter($orders);
+        return $orders;
+    }
 }

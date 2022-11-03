@@ -4,12 +4,14 @@
 * User: callcocam@gmail.com, contato@sigasmart.com.br
 * https://www.sigasmart.com.br
 */
-namespace Tall\Cms\Models;
+namespace Tall\Orm\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Tall\Cms\Scopes\UuidGenerate;
 use Tall\Sluggable\SlugOptions;
 use Tall\Sluggable\HasSlug;
+use Tall\Theme\Models\Make;
 
 class AbstractModel extends Model
 {
@@ -18,8 +20,8 @@ class AbstractModel extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $this->setIncrementing(config('tall-cms.incrementing', false));
-        $this->setKeyType(config('tall-cms.keyType', 'string'));
+        $this->setIncrementing(config('tall-orm.incrementing', false));
+        $this->setKeyType(config('tall-orm.keyType', 'string'));
     }   
 
     public function user()
@@ -40,5 +42,16 @@ class AbstractModel extends Model
     public function isUser()
     {
         return true;
+    }
+
+      /**
+     * Get the post's image.
+     */
+    public function make()
+    {
+        if(class_exists('\App\Models\Make')){
+            return $this->belongsTo('\App\Models\Make');
+        }
+        return $this->belongsTo(Make::class);
     }
 }

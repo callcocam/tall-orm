@@ -4,7 +4,7 @@
 * User: callcocam@gmail.com, contato@sigasmart.com.br
 * https://www.sigasmart.com.br
 */
-namespace Tall\Orm\Core\Form;
+namespace Tall\Orm\Http\Livewire;
 
 use Tall\Orm\Http\Livewire\AbstractComponent;
 use Illuminate\Support\Arr;
@@ -44,6 +44,11 @@ abstract class FormComponent extends AbstractComponent
     public $columnDescription = 'subtitle';
 
     /**
+     * Controlar modal usando o livewire alpinejs etangle
+     */
+    public $showModal = false;
+
+    /**
      * @var string[]
      */
     protected $listeners = ['refreshDelete', 'refreshUpdate', 'refreshCreate'];
@@ -75,6 +80,16 @@ abstract class FormComponent extends AbstractComponent
      */
     protected function title()
     {
+       
+        return __(config('app.name'));
+    }
+
+      /**
+     * Monta automaticamente o titulo da pagina
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function active()
+    {
         if ($this->model->exists) {
             if ($columnName = data_get($this->form_data, $this->columnName, false)) {
                 return sprintf('Editar %s', $columnName);
@@ -89,12 +104,7 @@ abstract class FormComponent extends AbstractComponent
      */
     protected function description()
     {
-        if ($this->model->exists) {
-            if ($columnDescription = data_get($this->form_data, $this->columnDescription, false)) {
-                return $columnDescription;
-            }
-        }
-        return null;
+        return class_basename($this->model);
     }
 
     /**
@@ -107,11 +117,12 @@ abstract class FormComponent extends AbstractComponent
      */
     protected function formAttr(): array
     {
-      
+   
         return [
             'title'=>$this->title(),
             'description'=>$this->description(),
-            'route'=>$this->back(session()->get('back')),
+            'routeList'=>session()->get('back'),
+            'active'=>$this->active(),
         ];
     }
     /**
@@ -158,28 +169,31 @@ abstract class FormComponent extends AbstractComponent
          */
         foreach ($this->fields() as $field):
             if (!isset($this->form_data[$field->name])):
-                $array = in_array($field->type, ['checkbox', 'file']);
-                if (in_array($field->type, ['file'])) {
-                    if ($this->form_data[$field->name] = data_get($model, $field->name)) {
+                $type = data_get($field->attributes, 'type');
+                $name = data_get($field, 'name');
+                $array = in_array($type, ['checkbox', 'file']);
+                if (in_array($type, ['file'])) {
+                    if ($this->form_data[$name] = data_get($model, $name)) {
+                        $alias = data_get($field, 'alias');
                         /**
                          * O alias é um apelido para um campo de imagem ou file perssonalizado na model
                          */
-                        $this->form_data[$field->alias] = data_get($model, $field->alias);
+                        $this->form_data[$alias] = data_get($model, $alias);
                         /**
                          * o campo ou method file geralmente e usada para arquivos
                          */
                         if(method_exists($model, 'file')){
-                            $this->form_data[$field->name] = data_get($model, $field->name)->file;
+                            $this->form_data[$name] = data_get($model, $name)->file;
                         }
                         /**
                          * o method cover geralmente é usada pa imagens e fotos
                          */
                         if(method_exists($model, 'cover')){
-                            $this->form_data[$field->name] = data_get($model, $field->name)->cover;
+                            $this->form_data[$name] = data_get($model, $name)->cover;
                         }
                     }
                 } else {
-                    $this->form_data[$field->name] = $field->default ?? ($array ? [] : null);
+                    $this->form_data[$name] = $field->default ?? ($array ? [] : null);
                 }
             endif;
         endforeach;
@@ -325,6 +339,7 @@ abstract class FormComponent extends AbstractComponent
      */
     public function saveAndStay()
     {
+     
         $this->submit();
     }
 

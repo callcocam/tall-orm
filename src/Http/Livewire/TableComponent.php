@@ -4,7 +4,7 @@
 * User: callcocam@gmail.com, contato@sigasmart.com.br
 * https://www.sigasmart.com.br
 */
-namespace Tall\Orm\Table;
+namespace Tall\Orm\Http\Livewire;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\WithPagination;
@@ -25,12 +25,32 @@ abstract class TableComponent extends AbstractComponent
      * Coleção de filtros para listar e condiçoes de vizualização, que serão passados para a url
      */
     public $filters = [];
+    public $status = [];
+    public $tableField;
     
     protected $queryString = [
         'filters' => ['except' => []],
         'page' => ['except' => 1],
     ];
 
+    protected $paginationTheme = 'card';
+
+    public function setUp($currentRoute=null)
+    {
+       if($currentRoute){
+            session()->put('back', $currentRoute);
+       }
+
+       if($query = $this->query()){
+            $this->status = $query->whereStatus('published')->pluck('id','id')->toArray();
+
+        //    $this->tableField =  app('make')->firstOrCreate([
+        //         'name'=>$query->getModel()->getTable()
+        //     ]);
+       }
+
+       
+    }
     /**
      * Fução para iniciar o carregamento da model
      * Voce deve sobrescrever essas informações no component filho 
@@ -46,11 +66,7 @@ abstract class TableComponent extends AbstractComponent
      */
     protected function title()
     {
-        if($query = $this->query()){
-            return class_basename($query->getModel());
-        }
-
-        return __('Lista');
+        return config('app.name');
     }
     /**
      * Monta automaticamente o subtitulo da pagina
@@ -58,7 +74,9 @@ abstract class TableComponent extends AbstractComponent
      */
     protected function description()
     {
-        return null;
+        if($query = $this->query()){
+            return class_basename($query->getModel());
+        }
     }
     /**
      * Rota para cadastra um novo registro
@@ -120,6 +138,7 @@ abstract class TableComponent extends AbstractComponent
         return [
             'title'=>$this->title(),
             'description'=>$this->description(),
+            'route'=>route('admin'),
             'create'=>$this->route_create(),
             'edit'=>$this->route_edit(),
             'show'=>$this->route_show(),
@@ -148,6 +167,7 @@ abstract class TableComponent extends AbstractComponent
     public function models()
     {
         if ( $builder = $this->query()) {
+            
             $builder->where(function (Builder $builder) {
                 /**
                  * Usa as colunas para filtral

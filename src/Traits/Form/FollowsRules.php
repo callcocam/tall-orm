@@ -24,7 +24,7 @@ trait FollowsRules
 
                 foreach ($field->array_fields as $array_field) {
                     if ($array_field->rules) {
-                        $rules[$array_field->key ] = $this->fieldRules($array_field, $rules_ignore);
+                        $rules[$array_field->key] = $this->fieldRules($array_field, $rules_ignore);
                     }
                 }
             }

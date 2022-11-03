@@ -52,6 +52,38 @@ trait Kill
             $this->PDOException($PDOException);
         }
     }
+    
+    public function delete($callback=null)
+    {
+        try {
+            $this->model->delete();
+            if($callback){
+                call_user_func_array($callback,[ 
+                    'result'=>true
+                ]);
+            }else{
+                /**
+                 * Informação para o PHP session
+                 */
+                session()->flash('notification', ['text' => "Registro apagado com sucesso!", 'variant'=>'success', 'time'=>3000, 'position'=>'right-top']);
+                /**
+                 * Informação em forma de evento para o java script
+                 */
+                $this->dispatchBrowserEvent('notification', ['text' => "Registro apagado com sucesso!", 'variant'=>'success', 'time'=>3000, 'position'=>'right-top']);
+                /**
+                 * Atualizar informações em components interlidados
+                 */
+                $this->emit('refreshDelete', [ 
+                    'result'=>true
+                ]);
+            }
+            $this->confirming = null;
+            return ;
+        }catch (\PDOException $PDOException){
+            $this->confirming = null;
+            $this->PDOException($PDOException);
+        }
+    }
 
      /**
      * Envia uma menssagem de erro para o usuário
