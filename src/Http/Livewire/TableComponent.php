@@ -11,14 +11,16 @@ use Livewire\WithPagination;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\{Str ,Arr};
 use Carbon\Carbon as CarbonCarbon;
-use Tall\Cms\Http\Livewire\AbstractComponent;
+use Illuminate\Support\Facades\Route;
+use Tall\Orm\Traits\Table\BulkActions;
+use Tall\Orm\Traits\Table\CachedRows;
 use Tall\Orm\Traits\Table\Pagination;
 use Tall\Orm\Traits\Table\Search;
 use Tall\Orm\Traits\Table\Sorting;
 
 abstract class TableComponent extends AbstractComponent
 {
-    use AuthorizesRequests, WithPagination, Search, Sorting, Pagination;
+    use AuthorizesRequests, WithPagination, Search, Sorting, BulkActions, CachedRows, Pagination;
 
     /**
      * @var $filters
@@ -26,8 +28,33 @@ abstract class TableComponent extends AbstractComponent
      */
     public $filters = [];
     public $status = [];
+    public $params = [];
+    public $perPage = 12;
+    public $config;
+    public $path;
     public $tableField;
+    public $data_field = "created_at";
     
+     /**
+     * Indicates if user deletion is being confirmed.
+     *
+     * @var bool
+     */
+    public $isFilterExpanded = false;
+    public $showDeleteModal = false;
+    public $isShowPopper = false;
+
+    /**
+     * Confirm that the user would like to delete their account.
+     *
+     * @return void
+     */
+    public function confirmisFilterExpanded()
+    {
+
+        $this->isFilterExpanded = !$this->isFilterExpanded;
+    }
+
     protected $queryString = [
         'filters' => ['except' => []],
         'page' => ['except' => 1],
@@ -43,13 +70,8 @@ abstract class TableComponent extends AbstractComponent
 
        if($query = $this->query()){
             $this->status = $query->whereStatus('published')->pluck('id','id')->toArray();
-
-        //    $this->tableField =  app('make')->firstOrCreate([
-        //         'name'=>$query->getModel()->getTable()
-        //     ]);
        }
 
-       
     }
     /**
      * Fução para iniciar o carregamento da model
@@ -59,6 +81,16 @@ abstract class TableComponent extends AbstractComponent
      * ex: return Post::query()->orderBy('name')->whre('status','published')
      */
     abstract protected function query();    
+
+    /**
+     * Parametros (array) de informações
+     * Usado para atualizar as informações do component depois de uma exclusão do registro
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    public function refreshDelete($data=[]){
+       
+        $this->resetPage();
+    }
 
     /**
      * Monta automaticamente o titulo da pagina
@@ -74,6 +106,9 @@ abstract class TableComponent extends AbstractComponent
      */
     protected function description()
     {
+        if($this->config){
+            return $this->config->name;
+        }
         if($query = $this->query()){
             return class_basename($query->getModel());
         }
@@ -84,6 +119,16 @@ abstract class TableComponent extends AbstractComponent
      */
     protected function route_create()
     {
+        if($this->config){
+            $create = sprintf("%s.create",$this->config->route);
+            if(Route::has($create )){
+                $params=[];
+                if($url = $this->config->url){
+                    $params[Str::lower($this->config->model)] = $url;
+                }
+                return route($create , $params);
+            }
+        }
         return null;
     }
     /**
@@ -92,6 +137,9 @@ abstract class TableComponent extends AbstractComponent
      */
     protected function route_edit()
     {
+        if($this->config){
+            return sprintf("%s.eidt",$this->config->route);
+         }
         return null;
     }
     /**
@@ -100,6 +148,9 @@ abstract class TableComponent extends AbstractComponent
      */
     protected function route_show()
     {
+        if($this->config){
+            return sprintf("%s.view",$this->config->route);
+         }
         return null;
     }
     /**
@@ -108,6 +159,9 @@ abstract class TableComponent extends AbstractComponent
      */
     protected function route_delete()
     {
+        if($this->config){
+            return sprintf("%s.delete",$this->config->route);
+         }
         return null;
     }
 
@@ -139,10 +193,12 @@ abstract class TableComponent extends AbstractComponent
             'title'=>$this->title(),
             'description'=>$this->description(),
             'route'=>route('admin'),
-            'create'=>$this->route_create(),
-            'edit'=>$this->route_edit(),
-            'show'=>$this->route_show(),
-            'delete'=>$this->route_delete(),
+            'crud'=>[                
+                'create'=>$this->route_create(),
+                'edit'=>$this->route_edit(),
+                'show'=>$this->route_show(),
+                'delete'=>$this->route_delete(),
+            ]
         ];
     }
     /**
@@ -154,8 +210,11 @@ abstract class TableComponent extends AbstractComponent
     protected function data(){
         return [
             'tableAttr'=>$this->tableAttr(),
-            'models'=>$this->models(),
+            'models'=>$this->cache(function () {
+                return $this->applyPagination($this->models());
+            }),
             'columns'=>$this->columns(),
+            'statusOptions'=>array_combine(['draft','published'],['draft','published']),
         ];
     }
     
@@ -168,6 +227,8 @@ abstract class TableComponent extends AbstractComponent
     {
         if ( $builder = $this->query()) {
             
+            $this->useCachedRows();
+
             $builder->where(function (Builder $builder) {
                 /**
                  * Usa as colunas para filtral
@@ -194,16 +255,14 @@ abstract class TableComponent extends AbstractComponent
                     }
                 }
             });
-            if ($range = data_get($this->filters ,'range')){
-                $start = Str::beforeLast($range, ' ');
-                $end = Str::afterLast($range, ' ');
-                $builder->whereBetween($this->data_field, [CarbonCarbon::parse($start)->format('Y-m-d'), CarbonCarbon::parse($end)->format('Y-m-d')]);                   
-            }
-    
-            if ($status = data_get($this->filters ,'status')){
-                $builder->whereIn('status', [$status]);                   
-            }
-            return $this->appendGuery($builder)->orderBy($this->getSortField(), $this->direction)->paginate(data_get($this->filters ,'perPage'));
+
+            $builder->when(data_get($this->filters,'status'), fn($query, $status) => $query->where('status', $status));
+          
+            $builder->when(data_get($this->filters,'start'), fn($query, $date) => $query->where($this->data_field, '>=', CarbonCarbon::parse($date)));
+           
+            $builder->when(data_get($this->filters,'end'), fn($query, $date) => $query->where($this->data_field, '<=', CarbonCarbon::parse($date)));
+                       
+            return $this->appendGuery($builder)->orderBy($this->getSortField(), $this->getDirection());
 
         }
         return null;   
@@ -215,8 +274,17 @@ abstract class TableComponent extends AbstractComponent
         return $builder;
     }
 
+    public function clearFilters()
+    {
+       $this->reset(['filters']);
+       
+       $this->confirmisFilterExpanded();
+    }
+
     public function updatedFilters($data)
     {
+        $this->resetPage();
+
        foreach($this->filters as $key => $value){
             if(empty($value)){
                 unset($this->filters[$key]);

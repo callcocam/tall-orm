@@ -46,4 +46,10 @@ trait Pagination
         $this->resetPage();
     }
 
+    public function applyPagination($query)
+    {
+        if($query)
+            return $query->paginate(data_get($this->filters ,'perPage', $this->perPage));
+    }
+
 }

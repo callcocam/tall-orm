@@ -14,31 +14,46 @@ trait Sorting
 {
     /**
      * Sorting.
-     * The initial field to be sorting by.
+     * The initial sortField to be sorting by.
      *
      * @var string
      */
-    public $field = 'created_at';
+    public $sortField = 'sort';
 
     /**
      * The initial direction to sort.
      *
      * @var bool
      */
-    public $direction = 'desc';
+    public $direction = 'direction';
 
     /**
      * @param $attribute
      */
     public function sort($attribute)
     {
-        if ($this->field !== $attribute) {
-            $this->direction = 'asc';
-        } else {
-            $this->direction = $this->direction === 'asc' ? 'desc' : 'asc';
-        }
+        if ($sort = data_get($this->filters, $this->sortField)) {
 
-        $this->field = $attribute;
+            if ($sort !== $attribute) {
+
+                data_set($this->filters, $this->direction,  'asc');
+
+            } else {
+
+                $direction = data_get($this->filters, $this->direction) === 'asc' ? 'desc' : 'asc';
+
+                data_set($this->filters, $this->direction,  $direction);
+
+            }
+
+        } else {
+
+            data_set($this->filters, $this->direction,  'asc');
+
+        }
+            
+        data_set($this->filters, $this->sortField,  $attribute);
+
     }
 
     /**
@@ -47,6 +62,15 @@ trait Sorting
      */
     protected function getSortField(): string
     {
-        return $this->field;
+        return data_get($this->filters, $this->sortField, 'created_at');
+    }
+
+    /**
+     *
+     * @return string
+     */
+    protected function getDirection(): string
+    {
+        return data_get($this->filters, $this->direction, 'asc');
     }
 }

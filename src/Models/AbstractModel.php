@@ -54,4 +54,13 @@ class AbstractModel extends Model
         }
         return $this->belongsTo(Make::class);
     }
+
+
+    public function getStatusColorAttribute()
+    {
+        return [
+            'draft'=>'secondary',
+            'published'=>'success',
+        ][$this->status] ?? 'primary';
+    }
 }

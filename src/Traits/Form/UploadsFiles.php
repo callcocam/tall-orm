@@ -6,6 +6,7 @@
  */
 namespace Tall\Orm\Traits\Form;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -26,60 +27,80 @@ trait UploadsFiles
     public $storage_path;
     public $files=[];
 
-    public  function fileUpload()
+    public  function fileUpload($dataFiles=[])
     {
-        if($this->files){
             $storage_disk = $this->storage_disk ?? config('form.storage_disk', config('filesystems.default'));
             $storage_path = $this->storage_path ?? config('form.storage_path','images');
             $files = [];
-    
-            foreach ($this->files as $key => $file) {
-                $files[$key] = [
-                    'file' => $file->store($storage_path, $storage_disk),
-                    'disk' => $storage_disk,
-                    'name' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
-                    'mime_type' => $file->getMimeType(),
-                ];
-
+            foreach ($this->fields() as $field) {
+                if($field->hasType('file')){
+                    $data = data_get($this->form_data, $field->name);
+                    if(!$field->has('multiple')){
+                        $dataFiles[$field->name] = $data;
+                    }
+                    else{
+                        $dataFiles = $data;
+                    }
+                    foreach ($dataFiles as  $key => $file) {
+                        if($file instanceof UploadedFile){
+                            $this->fileUploadate($field, [
+                                'source' => $file->store($storage_path, $storage_disk),
+                                'disk' => $storage_disk,
+                                'name' => $file->getClientOriginalName(),
+                                'size' => $file->getSize(),
+                                'mime_type' => $file->getMimeType(),
+                                ]);
+                        }
+                    }
+                }
             }
             return $files;
-        }
-        return [];
+        
     }
 
-     public function fileUploadate($field_name, $uploaded_files)
+     public function fileUploadate($field, $uploaded_files)
     {
-        foreach ($this->fields() as $field) {
-            if ($field->name == $field_name) {
-                if($field->has('multiple')){
-                    $value = $field->file_multiple ? array_merge($this->form_data[$field_name], $uploaded_files) : $uploaded_files;
-                }
-                else{
-                    $this->form_data[$field_name] = data_get($uploaded_files,'file');
-                }
-                $this->updated(sprintf('form_data.%s', $field_name));
-            }
+        if(method_exists($this->model, 'updateImages') && $field->has('multiple')){
+            $this->form_data[$field->name] = $this->model->updateImages($uploaded_files);
         }
+        else{
+            $this->form_data[$field->name] = data_get($uploaded_files,'source');
+        }
+        $this->updated(sprintf('form_data.%s', $field->name));
        
     }
 
-    public function deleteUploadUrl($file)
-    {
 
-        if (!$this->isDeleteUrl($this->form_data[$file])) {
-            Storage::delete($this->form_data[$file]);
-            if ($this->model->image) {
-                $this->model->image->update([
-                    'file' => "defaults/no_image.png",
-                    'disk' => 'public',
-                    'name' => "no_image.png",
-                    'size' => null,
-                    'mime_type' => 'image/png',
-                ]);
-                $this->setFormProperties($this->model);
+    public function reorderfiles($id, $ordering)
+    {
+        $originData = $this->model->images()->where('id',$id)->first();
+
+        if($originData){
+            $originData->ordering = $ordering;
+            $originData->update();
+        }
+    }
+
+    public function deleteUploadUrl($file,$id)
+    {
+     
+        if(method_exists($this->model, 'deleteImage')){
+            if(!$this->model->deleteImage($id)){
+                if (!$this->isDeleteUrl($this->form_data[$file])) {
+                    Storage::delete($this->form_data[$file]);
+                    $this->form_data[$file] = null;
+                    $this->updated(sprintf('form_data.%s', $file));
+                }
             }
         }
+       else{
+        if (!$this->isDeleteUrl($this->form_data[$file])) {
+            Storage::delete($this->form_data[$file]);
+            $this->form_data[$file] = null;
+            $this->updated(sprintf('form_data.%s', $file));
+        }
+       }
+        
     }
 
     public function fileIcon($mime_type)
@@ -117,9 +138,11 @@ trait UploadsFiles
         return (isset($icons[$mime_group])) ? $icons[$mime_group] : 'fa-file';
     }
 
-
     protected function isDeleteUrl($file)
     {
+        if(is_array($file)){
+            return false;
+        }
         return Str::contains($file, 'no_image');
     }
 }
