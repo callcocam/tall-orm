@@ -7,15 +7,16 @@
 namespace Tall\Orm\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Tall\Cms\Scopes\UuidGenerate;
 use Tall\Sluggable\SlugOptions;
 use Tall\Sluggable\HasSlug;
 use Tall\Theme\Models\Make;
 
 class AbstractModel extends Model
 {
-    use UuidGenerate, HasSlug;
+    use HasUuids;
+    use HasSlug;
 
     public function __construct(array $attributes = [])
     {
@@ -47,7 +48,7 @@ class AbstractModel extends Model
       /**
      * Get the post's image.
      */
-    public function make()
+    public function makes()
     {
         if(class_exists('\App\Models\Make')){
             return $this->belongsTo('\App\Models\Make');
@@ -55,6 +56,17 @@ class AbstractModel extends Model
         return $this->belongsTo(Make::class);
     }
 
+
+    
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'created_at' => 'datetime:Y-m-d',
+        'updated_at' => 'datetime:Y-m-d',
+    ];
 
     public function getStatusColorAttribute()
     {

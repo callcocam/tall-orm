@@ -6,7 +6,6 @@
 */
 namespace Tall\Orm\Http\Livewire;
 
-use Illuminate\Http\UploadedFile;
 use Tall\Orm\Http\Livewire\AbstractComponent;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
@@ -109,10 +108,9 @@ abstract class FormComponent extends AbstractComponent
             'span'=>$this->span(),
             'spanLeft'=>$this->spanLeft(),
             'spanRigth'=>$this->spanRigth(),
-            'config'=>$this->config,
             'crud'=>[
-                'list'=>$this->route_list($this->config),
-                'edit'=>$this->route_edit($this->config),
+                'list'=>$this->route_list(),
+                'edit'=>$this->route_edit(),
             ]
         ];
     }
@@ -121,9 +119,9 @@ abstract class FormComponent extends AbstractComponent
      * Rota para editar um registro
      * Voce deve sobrescrever essas informações no component filho (opcional)
      */
-    protected function route_list($config = null)
+    protected function route_list()
     {
-        if($config){
+        if($config = $this->config){
             if(Route::has($config->route)){
                 $params =$this->path;
                 return route($config->route, $params);
@@ -136,7 +134,7 @@ abstract class FormComponent extends AbstractComponent
      * Rota para editar um registro
      * Voce deve sobrescrever essas informações no component filho (opcional)
      */
-    protected function route_edit($config = null)
+    protected function route_edit()
     {
         // if($config){
         //     if($config){
@@ -180,6 +178,8 @@ abstract class FormComponent extends AbstractComponent
     {
         return '4';
     }
+
+
     /**
      * Monta um array de campos (opcional)
      * Voce pode sobrescrever essas informações no component filho
@@ -190,7 +190,19 @@ abstract class FormComponent extends AbstractComponent
     {
         return [];
     }
-
+    
+    /**
+     * Monta um array de basicos para os form de create
+     * Voce pode sobrescrever essas informações no component filho
+     * @return array
+     */
+    protected function blankModel($data = []){
+        return array_merge([
+            'created_at'=>now()->format("d-m-Y"),
+            'updated_at'=>now()->format("d-m-Y"),
+            'status'=>'published',
+        ], $data);
+    }
     /**
      * Carrega os valores iniciais do component no carrgamento do messmo
      * O resulta final será algo do tipo form_data.name='Informação vinda do banco'
@@ -198,9 +210,12 @@ abstract class FormComponent extends AbstractComponent
      */
     protected function setFormProperties($model = null, $currentRouteName=null)
     {
+        $this->setUp(  Route::currentRouteName() );
+        
+        $this->setConfigProperties(  $this->moke( $this->getName() ) );
+
 
         $this->model = $model;
-        $this->currentRouteName = $currentRouteName;
 
         if ($model) {
             $this->form_data = $model->toArray();

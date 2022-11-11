@@ -6,8 +6,11 @@
 */
 namespace Tall\Orm\Http\Livewire;
 
+use Illuminate\Support\Facades\Route;
 use Livewire\Component;
- 
+use Illuminate\Support\Str;
+use Tall\Cms\Models\Make;
+
 abstract class AbstractComponent extends Component
 {
     
@@ -16,12 +19,17 @@ abstract class AbstractComponent extends Component
      * Carregado com o modelo de configuração dinamica
      * Voce pode sobrescrever essas informações no component filho, mas quase nunca será necessário
      */
-    protected $config; 
+    public $config; 
     
     /**
      * Salva a rota corrente
      */
     public $currentRoute;
+    
+    /**
+     * Salva a rota corrente
+     */
+    public $currentRouteName;
     
     /**
      * Controlar modal usando o livewire alpinejs etangle
@@ -62,6 +70,11 @@ abstract class AbstractComponent extends Component
     abstract protected function view($sufix="-component");
     
     
+    public function setUp($currentRouteName=null)
+    {
+       $this->currentRouteName = $currentRouteName;
+
+    }
     /**
      * Carrega os valores iniciais do component no carrgamento do messmo
      * O resulta final será algo do tipo form_data.name='Informação vinda do banco'
@@ -70,7 +83,9 @@ abstract class AbstractComponent extends Component
     protected function setConfigProperties($config = null, $currentRouteName=null)
     {
 
-        $this->config = $config;
+        
+        $this->currentRouteName = $currentRouteName ?? Route::currentRouteName();
+        $this->config =   $config;
 
     }
 
@@ -113,6 +128,26 @@ abstract class AbstractComponent extends Component
     }
 
 
+    protected function moke($component_name=null,$data=[])
+    {
+        if(is_null($component_name)) $component_name = $this->getName();
+        $name = Str::beforeLast($component_name, '.');
+        $listRoute = Str::replace(['.create','.edit','.show','.delete'],'',$this->currentRouteName );
+        $listPath = Str::afterLast($listRoute, 'admin.' );
+        
+        return Make::firstOrCreate(
+            [
+                'component_name'=>$name,
+                'route'=>$listRoute,
+            ],
+            array_merge([
+                'name'=>$this->description(),
+                'url'=>$listPath,
+                'model'=>$this->description(),
+                'status' => 'published'
+            ], $data)
+        );
+    }
      /**
      * Envia uma menssagem de erro para o usuário
      * você deve tratar essa informação na sua visualização

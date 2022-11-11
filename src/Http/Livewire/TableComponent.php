@@ -9,7 +9,7 @@ namespace Tall\Orm\Http\Livewire;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\WithPagination;
 use Illuminate\Contracts\Database\Query\Builder;
-use Illuminate\Support\{Str ,Arr};
+use Illuminate\Support\{Str };
 use Carbon\Carbon as CarbonCarbon;
 use Illuminate\Support\Facades\Route;
 use Tall\Orm\Traits\Table\BulkActions;
@@ -30,7 +30,6 @@ abstract class TableComponent extends AbstractComponent
     public $status = [];
     public $params = [];
     public $perPage = 12;
-    public $config;
     public $path;
     public $tableField;
     public $data_field = "created_at";
@@ -62,10 +61,15 @@ abstract class TableComponent extends AbstractComponent
 
     protected $paginationTheme = 'card';
 
-    public function setUp($currentRoute=null)
+    public function setUp($currentRouteName=null)
     {
-       if($currentRoute){
-            session()->put('back', $currentRoute);
+       $this->currentRouteName = $currentRouteName;
+       
+       
+       $this->setConfigProperties($this->moke($this->getName()));
+       
+       if($currentRouteName){
+            session()->put('back', $currentRouteName);
        }
 
        if($query = $this->query()){
