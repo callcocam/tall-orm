@@ -10,6 +10,9 @@
         "callcocam/tall-schema": "dev-main"
     },
     "autoload": {
+        "files": [
+            "helper.php"
+        ],
         "psr-4": {
             "Tall\\Orm\\": "src"
         }
