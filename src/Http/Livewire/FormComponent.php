@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Livewire\WithFileUploads;
 use Tall\Orm\Traits\Form\FollowsRules;
 use Tall\Orm\Traits\Form\UploadsFiles;
+use Symfony\Component\HttpFoundation\Response as R;
 
 abstract class FormComponent extends AbstractComponent
 {
@@ -88,6 +89,20 @@ abstract class FormComponent extends AbstractComponent
         }
         return class_basename($this->model);
     }
+
+    
+    /**
+     * Monta automaticamente o nome da model
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function modelClass()
+    {
+        if($this->config){
+            return $this->config->model;
+        }
+        return get_class($this->model);
+    }
+
 
     /**
      * formAttr
@@ -210,16 +225,20 @@ abstract class FormComponent extends AbstractComponent
      */
     protected function setFormProperties($model = null, $currentRouteName=null)
     {
-        $this->setUp(  Route::currentRouteName() );
-        
-        $this->setConfigProperties(  $this->moke( $this->getName() ) );
 
-
+        abort_if(!$this->user->hasTeamPermission($this->team, $this->permission), R::HTTP_UNAUTHORIZED, 'THIS ACTION IS UNAUTHORIZED.');
+      
         $this->model = $model;
 
         if ($model) {
             $this->form_data = $model->toArray();
         }
+
+        $this->setUp(  Route::currentRouteName() );
+        
+        $this->setConfigProperties(  $this->moke( $this->getName() ) );
+
+
         /**
          * Esse trecho de código garante que campos que não vem do banco também sejam pré carregados
          * ele não substitui as informações vindas do bano de dados

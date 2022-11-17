@@ -18,6 +18,8 @@ use Tall\Orm\Traits\Table\Pagination;
 use Tall\Orm\Traits\Table\Search;
 use Tall\Orm\Traits\Table\Sorting;
 
+use Symfony\Component\HttpFoundation\Response as R;
+
 abstract class TableComponent extends AbstractComponent
 {
     use AuthorizesRequests, WithPagination, Search, Sorting, BulkActions, CachedRows, Pagination;
@@ -64,8 +66,42 @@ abstract class TableComponent extends AbstractComponent
     public function setUp($currentRouteName=null)
     {
        $this->currentRouteName = $currentRouteName;
-       
-       
+     
+       abort_if(!$this->user->hasTeamPermission($this->team, $this->permission), R::HTTP_UNAUTHORIZED, 'THIS ACTION IS UNAUTHORIZED.');
+       // Access a user's currently selected team...
+        // dump($user->currentTeam->name);// : Laravel\Jetstream\Team
+
+        // Access all of the team's (including owned teams) that a user belongs to...
+        // dump($user->allTeams() );//: Illuminate\Support\Collection
+
+        // Access all of a user's owned teams...
+        // dump($user->ownedTeams); // : Illuminate\Database\Eloquent\Collection
+
+        // Access all of the teams that a user belongs to but does not own...
+        // dump($user->teams); // : Illuminate\Database\Eloquent\Collection
+
+        // Access a user's "personal" team...
+        // dump($user->personalTeam()); // : Laravel\Jetstream\Team
+
+        // Determine if a user owns a given team...
+        // dump($user->ownsTeam($team));// : bool
+
+        // Determine if a user belongs to a given team...
+        // dump($user->belongsToTeam($team));// : bool
+
+        // Get the role that the user is assigned on the team...
+        // dump($user->teamRole($team)); // : \Laravel\Jetstream\Role
+
+        // Determine if the user has the given role on the given team...
+        // dump($user->hasTeamRole($team, 'admin'));// : bool
+
+        // Access an array of all permissions a user has for a given team...
+        // dump($user->teamPermissions($team));// : array
+
+        // Determine if a user has a given team permission...
+        // dd($user->hasTeamPermission($team, 'read'));// : bool
+
+    //    dd( $user->teamPermissions($team, 'delete'));
        $this->setConfigProperties($this->moke($this->getName()));
        
        if($currentRouteName){
@@ -73,7 +109,7 @@ abstract class TableComponent extends AbstractComponent
        }
 
        if($query = $this->query()){
-            $this->status = $query->whereStatus('published')->pluck('id','id')->toArray();
+           // $this->status = $query->whereStatus('published')->pluck('id','id')->toArray();
        }
 
     }
@@ -117,6 +153,21 @@ abstract class TableComponent extends AbstractComponent
             return class_basename($query->getModel());
         }
     }
+
+       /**
+     * Monta automaticamente o nome da model
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function modelClass()
+    {
+        if($this->config){
+            return $this->config->model;
+        }
+        if($query = $this->query()){
+            return get_class( $query->getModel());
+        }
+    }
+
     /**
      * Rota para cadastra um novo registro
      * Voce deve sobrescrever essas informações no component filho (opcional)

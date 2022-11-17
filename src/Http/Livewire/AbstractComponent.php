@@ -9,6 +9,7 @@ namespace Tall\Orm\Http\Livewire;
 use Illuminate\Support\Facades\Route;
 use Livewire\Component;
 use Illuminate\Support\Str;
+use Laravel\Jetstream\Jetstream;
 use Tall\Cms\Models\Make;
 
 abstract class AbstractComponent extends Component
@@ -39,7 +40,7 @@ abstract class AbstractComponent extends Component
    /**
      * @var string[]
      */
-    protected $listeners = ['refreshDelete', 'refreshUpdate', 'refreshCreate'];
+    protected $listeners = ['refreshDelete', 'refreshUpdate', 'refreshCreate','refreshImport'];
 
      /**
      * Parametros (array) de informações
@@ -62,6 +63,13 @@ abstract class AbstractComponent extends Component
      */
     public function refreshDelete($data=[]){/** Ações aqui */}
 
+
+     /**
+     * Parametros (array) de informações
+     * Usado para atualizar as informações do component depois de um novo cadastro do registro
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    public function refreshImport($data=[]){/** Ações aqui */}
 
     /**
      * Essa função exige que você informe uma visualização para o component
@@ -130,6 +138,7 @@ abstract class AbstractComponent extends Component
 
     protected function moke($component_name=null,$data=[])
     {
+       
         if(is_null($component_name)) $component_name = $this->getName();
         $name = Str::beforeLast($component_name, '.');
         $listRoute = Str::replace(['.create','.edit','.show','.delete'],'',$this->currentRouteName );
@@ -143,7 +152,7 @@ abstract class AbstractComponent extends Component
             array_merge([
                 'name'=>$this->description(),
                 'url'=>$listPath,
-                'model'=>$this->description(),
+                'model'=>$this->modelClass(),
                 'status' => 'published'
             ], $data)
         );
@@ -175,5 +184,23 @@ abstract class AbstractComponent extends Component
         $orders = explode("|", $data);
         $orders = array_filter($orders);
         return $orders;
+    }
+
+
+    public function getPermissionProperty(){
+       $permission = request()->route()->getName();
+       $permission = Str::afterLast($permission, '.');
+       $permissions = Jetstream::$permissions;
+       $permissions = array_combine($permissions,$permissions);
+       return data_get($permissions, $permission, Jetstream::$defaultPermissions[0]);
+    }
+
+    public function getUserProperty(){
+
+       return auth()->user();
+    }
+
+    public function getTeamProperty(){
+       return $this->user->currentTeam;
     }
 }

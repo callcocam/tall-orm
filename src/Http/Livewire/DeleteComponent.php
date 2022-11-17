@@ -90,7 +90,18 @@ abstract class DeleteComponent extends AbstractComponent
         }
         return null;
     }
-
+    
+    /**
+     * Monta automaticamente o nome da model
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function modelClass()
+    {
+        if($this->config){
+            return $this->config->model;
+        }
+        return get_class($this->model);
+    }
     /**
      * deleteAttr
      * Informação basica da visualização

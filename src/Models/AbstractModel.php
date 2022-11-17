@@ -12,12 +12,15 @@ use Illuminate\Database\Eloquent\Model;
 use Tall\Sluggable\SlugOptions;
 use Tall\Sluggable\HasSlug;
 use Tall\Theme\Models\Make;
+use Tall\Theme\Models\Status;
 
 class AbstractModel extends Model
 {
     use HasUuids;
     use HasSlug;
 
+    protected $with = ['status'];
+    
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -56,6 +59,17 @@ class AbstractModel extends Model
         return $this->belongsTo(Make::class);
     }
 
+      /**
+     * Get the post's image.
+     */
+    public function status()
+    {
+        if(class_exists('\App\Models\Status')){
+            return $this->belongsTo('\App\Models\Status');
+        }
+        return $this->belongsTo(Status::class);
+    }
+
 
     
     /**
@@ -73,6 +87,6 @@ class AbstractModel extends Model
         return [
             'draft'=>'secondary',
             'published'=>'success',
-        ][$this->status] ?? 'primary';
+        ][data_get($this->status, 'slug')] ?? 'primary';
     }
 }

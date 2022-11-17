@@ -100,6 +100,16 @@ trait TColumn
 
 
    /**
+    * searchable blade
+    */
+   public function searchable($searchable)
+   {
+    $this->searchable = $searchable;
+
+    return $this;
+   }
+
+   /**
     * component blade
     */
    public function component($component)

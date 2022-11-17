@@ -94,6 +94,19 @@ abstract class ShowComponent extends AbstractComponent
     {
         return class_basename($this->model);
     }
+        
+    /**
+     * Monta automaticamente o nome da model
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function modelClass()
+    {
+        if($this->config){
+            return $this->config->model;
+        }
+        return get_class($this->model);
+    }
+
     /**
      * Monta automaticamente o titulo da pagina
      * Voce pode sobrescrever essas informações no component filho
