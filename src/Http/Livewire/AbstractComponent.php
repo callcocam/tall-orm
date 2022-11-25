@@ -171,6 +171,9 @@ abstract class AbstractComponent extends Component
          * Informação em forma de evento para o java script
          */
         $this->dispatchBrowserEvent('notification', ['text' => $PDOException->getMessage(), 'variant'=>'error', 'time'=>3000, 'position'=>'right-top']);
+       
+        $this->emit('notification', ['text' => $PDOException->getMessage(), 'variant'=>'error', 'time'=>3000, 'position'=>'right-top']);
+               
     }
     
     
@@ -188,11 +191,12 @@ abstract class AbstractComponent extends Component
 
 
     public function getPermissionProperty(){
-       $permission = request()->route()->getName();
-       $permission = Str::afterLast($permission, '.');
-       $permissions = Jetstream::$permissions;
-       $permissions = array_combine($permissions,$permissions);
-       return data_get($permissions, $permission, Jetstream::$defaultPermissions[0]);
+        $permission = request()->route()->getName();
+        //    $permission = Str::afterLast($permission, '.');
+        //    $permissions = Jetstream::$permissions;
+        //    $permissions = array_combine($permissions,$permissions);
+        //    return data_get($permissions, $permission, Jetstream::$defaultPermissions[0]);
+        return $permission;
     }
 
     public function getUserProperty(){

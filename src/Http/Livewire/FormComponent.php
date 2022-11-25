@@ -358,6 +358,7 @@ abstract class FormComponent extends AbstractComponent
                  * Atualizar informações em components interlidados
                  */
                 $this->emit('notification', ['text' => "Registro atualizado com sucesso!", 'variant'=>'success', 'time'=>3000, 'position'=>'right-top']);
+             
                 $this->emit('refreshCreate', $this->model);
             }
             return true;

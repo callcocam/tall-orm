@@ -85,15 +85,22 @@ trait TColumn
    public function route(string $route)
    {
       $this->route = $route;
+
+      $permission = $this->user()->hasTeamPermission($this->team(),$route);
       /**
        * Verificar se tem autorização para acesar a rota
        */
-      $this->hiddenIf(Gate::allows($route));
+      if($permission){         
+         /**
+          * Verificar se a rota exxis
+         */
+         $this->hiddenIf(Route::has($route));
+      }else{
+         $this->hiddenIf($permission);
+      }
+        
+      // $this->hiddenIf(Gate::allows($route));
 
-       /**
-       * Verificar se a rota exxis
-       */
-      $this->hiddenIf(Route::has($route));
 
       return $this;
    }
@@ -133,6 +140,25 @@ trait TColumn
    {
       return [];
    }
+
+
+   public function permission(){
+      $permission = request()->route()->getName();
+      //    $permission = Str::afterLast($permission, '.');
+      //    $permissions = Jetstream::$permissions;
+      //    $permissions = array_combine($permissions,$permissions);
+      //    return data_get($permissions, $permission, Jetstream::$defaultPermissions[0]);
+      return $permission;
+  }
+
+  public function user(){
+
+     return auth()->user();
+  }
+
+  public function team(){
+     return $this->user()->currentTeam;
+  }
 
     /**
      * @return string
