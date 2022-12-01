@@ -6,17 +6,17 @@
 */
 namespace Tall\Orm\Http\Livewire;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Tall\Orm\Http\Livewire\AbstractComponent;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use Livewire\WithFileUploads;
 use Tall\Orm\Traits\Form\FollowsRules;
 use Tall\Orm\Traits\Form\UploadsFiles;
-use Symfony\Component\HttpFoundation\Response as R;
 
 abstract class FormComponent extends AbstractComponent
 {
-    use FollowsRules, WithFileUploads,UploadsFiles;
+    use FollowsRules, WithFileUploads,UploadsFiles, AuthorizesRequests;
    
     /**
      * @var $config
@@ -225,8 +225,9 @@ abstract class FormComponent extends AbstractComponent
      */
     protected function setFormProperties($model = null, $currentRouteName=null)
     {
+        $this->authorize($this->permission);
 
-        abort_if(!$this->user->hasTeamPermission($this->team, $this->permission), R::HTTP_UNAUTHORIZED, 'THIS ACTION IS UNAUTHORIZED.');
+        // abort_if(!Gate::($this->team, $this->permission), R::HTTP_UNAUTHORIZED, 'THIS ACTION IS UNAUTHORIZED.');
       
         $this->model = $model;
 

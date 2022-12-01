@@ -6,10 +6,14 @@
 */
 namespace Tall\Orm\Http\Livewire;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Route;
 use Tall\Orm\Http\Livewire\AbstractComponent;
 
 abstract class ShowComponent extends AbstractComponent
 {
+
+    use AuthorizesRequests;
     /**
      * @var $model
      * Carregado com o modelo do banco ex:(User, Post)
@@ -114,7 +118,7 @@ abstract class ShowComponent extends AbstractComponent
     protected function active()
     {
         if ($columnName = data_get($this->form_data, $this->columnName, false)) {
-            return sprintf('Visualisar %s', $columnName);
+            return $columnName;
         }
     }
     /**
@@ -131,8 +135,15 @@ abstract class ShowComponent extends AbstractComponent
         return [
             'title'=>$this->title(),
             'description'=>$this->description(),
+            'routeList'=>session()->get('back'),
             'active'=>$this->active(),
-            'route'=>session()->get('back'),
+            'span'=>$this->span(),
+            'spanLeft'=>$this->spanLeft(),
+            'spanRigth'=>$this->spanRigth(),
+            'crud'=>[
+                'list'=>$this->route_list(),
+                'edit'=>$this->route_edit(),
+            ]
         ];
     }
     /**
@@ -160,6 +171,54 @@ abstract class ShowComponent extends AbstractComponent
         return [];
     }
 
+    
+    public function span()
+    {
+        return '12';
+    }
+  
+    public function spanLeft()
+    {
+        return '4';
+    }
+  
+    public function spanRigth()
+    {
+        return '4';
+    }
+    
+    /**
+     * Rota para editar um registro
+     * Voce deve sobrescrever essas informações no component filho (opcional)
+     */
+    protected function route_edit()
+    {
+        if($config = $this->config){
+            if ($this->model->exists) {
+                if(Route::has(sprintf('%s.edit', $config->route))){
+                    $params =[];
+                    $params['model'] =$this->model;
+                    return route(sprintf('%s.edit', $config->route), $params);
+                }
+            }
+         }
+        return null;
+    }
+       /**
+     * Rota para editar um registro
+     * Voce deve sobrescrever essas informações no component filho (opcional)
+     */
+    protected function route_list()
+    {
+        if($config = $this->config){
+            if(Route::has($config->route)){
+                $params =[];
+                return route($config->route, $params);
+            }              
+         }
+        return null;
+    }
+    
     /**
      * Carrega os valores iniciais do component no carrgamento do messmo
      * O resulta final será algo do tipo form_data.name='Informação vinda do banco'
@@ -168,11 +227,20 @@ abstract class ShowComponent extends AbstractComponent
     protected function setFormProperties($model = null, $currentRouteName=null)
     {
 
+        $this->authorize($this->permission);
+
+        // abort_if(!Gate::($this->team, $this->permission), R::HTTP_UNAUTHORIZED, 'THIS ACTION IS UNAUTHORIZED.');
+      
         $this->model = $model;
 
         if ($model) {
             $this->form_data = $model->toArray();
         }
+
+        $this->setUp(  $currentRouteName ?? Route::currentRouteName() );
+        
+        $this->setConfigProperties(  $this->moke( $this->getName() ) );
+
         /**
          * Esse trecho de código garante que campos que não vem do banco também sejam pré carregados
          * ele não substitui as informações vindas do bano de dados

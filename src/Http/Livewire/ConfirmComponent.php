@@ -72,5 +72,10 @@ abstract class ConfirmComponent extends AbstractComponent
             $this->PDOException($PDOException);
         }
     }
+    public function cancel()
+    {
+       
+        $this->showModal = false;
 
+    }
 }

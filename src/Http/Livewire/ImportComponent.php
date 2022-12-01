@@ -6,6 +6,7 @@
 */
 namespace Tall\Orm\Http\Livewire;
 
+use Illuminate\Support\Facades\Config;
 use Tall\Orm\Http\Livewire\AbstractComponent;
 
 use Tall\Schema\Schema;
@@ -48,6 +49,43 @@ abstract class ImportComponent extends AbstractComponent
      * Voce pode sobrescrever essas informações no component filho
      */
     public function refreshImport($data=[]){/** Ações aqui */}
+     
+     /**
+     * Monta automaticamente o titulo da pagina
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function active()
+    {
+        if ($this->model->exists) {
+            if ($columnName = data_get($this->form_data, $this->columnName, false)) {
+                return sprintf('Importar %s', $columnName);
+            }
+        }
+        return __("Importar registros");
+    }
+
+    /**
+     * Monta automaticamente o titulo da pagina
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function title()
+    {
+       
+        return __(config('app.name'));
+    }
+
+    
+    /**
+     * Monta automaticamente o titulo da pagina
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function description()
+    {
+        if($this->config){
+            return $this->config->name;
+        }
+        return class_basename($this->model);
+    }
 
     /**
      * Carrega os valores iniciais do component no carrgamento do messmo
@@ -65,18 +103,21 @@ abstract class ImportComponent extends AbstractComponent
     }
 
 
+    
     public function setColumnsProperties()
     {
             $table = app($this->model->model)->getTable();
-            
+
+            Config::set('database.default', app($this->model->model)->getConnectionName());
+
             $columns = $this->makeSchema()->getTable($table)->getColumns()->toArray();
-            
+
             $requiredColumnMaps = collect($this->generateForeignKeys($table, $columns))->filter(function($column){
                 if(is_array($column)){
                     return false;
                 }
                 
-                if(in_array($column->getName(), ['deleted_at','created_at','updated_at','slug'])){
+                if(in_array($column->getName(), ['updated_at','slug'])){
                     return false;
                 }
                 return $column->isNotNull();
@@ -92,7 +133,7 @@ abstract class ImportComponent extends AbstractComponent
                 if(is_array($column)){
                     return false;
                 }
-                if(in_array($column->getName(), ['deleted_at','created_at','updated_at','slug'])){
+                if(in_array($column->getName(), ['updated_at','slug'])){
                     return false;
                 }
                 return true;

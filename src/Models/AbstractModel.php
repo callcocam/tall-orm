@@ -62,6 +62,14 @@ class AbstractModel extends Model
       /**
      * Get the post's image.
      */
+    public function tenant()
+    {
+        return $this->belongsTo(Make::class);
+    }
+
+      /**
+     * Get the post's image.
+     */
     public function status()
     {
         if(class_exists('\App\Models\Status')){

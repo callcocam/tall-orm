@@ -86,7 +86,7 @@ trait TColumn
    {
       $this->route = $route;
 
-      $permission = $this->user()->hasTeamPermission($this->team(),$route);
+      $permission = $this->user()->can($route);
       /**
        * Verificar se tem autorização para acesar a rota
        */

@@ -18,7 +18,6 @@ use Tall\Orm\Traits\Table\Pagination;
 use Tall\Orm\Traits\Table\Search;
 use Tall\Orm\Traits\Table\Sorting;
 
-use Symfony\Component\HttpFoundation\Response as R;
 
 abstract class TableComponent extends AbstractComponent
 {
@@ -67,41 +66,8 @@ abstract class TableComponent extends AbstractComponent
     {
        $this->currentRouteName = $currentRouteName;
      
-       abort_if(!$this->user->hasTeamPermission($this->team, $this->permission), R::HTTP_UNAUTHORIZED, 'THIS ACTION IS UNAUTHORIZED.');
-       // Access a user's currently selected team...
-        // dump($user->currentTeam->name);// : Laravel\Jetstream\Team
-
-        // Access all of the team's (including owned teams) that a user belongs to...
-        // dump($user->allTeams() );//: Illuminate\Support\Collection
-
-        // Access all of a user's owned teams...
-        // dump($user->ownedTeams); // : Illuminate\Database\Eloquent\Collection
-
-        // Access all of the teams that a user belongs to but does not own...
-        // dump($user->teams); // : Illuminate\Database\Eloquent\Collection
-
-        // Access a user's "personal" team...
-        // dump($user->personalTeam()); // : Laravel\Jetstream\Team
-
-        // Determine if a user owns a given team...
-        // dump($user->ownsTeam($team));// : bool
-
-        // Determine if a user belongs to a given team...
-        // dump($user->belongsToTeam($team));// : bool
-
-        // Get the role that the user is assigned on the team...
-        // dump($user->teamRole($team)); // : \Laravel\Jetstream\Role
-
-        // Determine if the user has the given role on the given team...
-        // dump($user->hasTeamRole($team, 'admin'));// : bool
-
-        // Access an array of all permissions a user has for a given team...
-        // dump($user->teamPermissions($team));// : array
-
-        // Determine if a user has a given team permission...
-        // dd($user->hasTeamPermission($team, 'read'));// : bool
-
-    //    dd( $user->teamPermissions($team, 'delete'));
+       $this->authorize($this->permission);
+    
        $this->setConfigProperties($this->moke($this->getName()));
        
        if($currentRouteName){
@@ -178,9 +144,9 @@ abstract class TableComponent extends AbstractComponent
             $create = sprintf("%s.create",$this->config->route);
             if(Route::has($create )){
                 $params=[];
-                if($url = $this->config->url){
-                    $params[Str::lower($this->config->model)] = $url;
-                }
+                // if($url = $this->config->url){
+                //     $params[Str::lower($this->config->model)] = $url;
+                // }
                 return route($create , $params);
             }
         }
@@ -345,5 +311,10 @@ abstract class TableComponent extends AbstractComponent
                 unset($this->filters[$key]);
             }
        }
+    }
+
+    public function getImportProperty()
+    {
+        return 'tall::admin.imports.csv-component';
     }
 }

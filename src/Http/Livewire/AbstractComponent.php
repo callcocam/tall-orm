@@ -9,7 +9,6 @@ namespace Tall\Orm\Http\Livewire;
 use Illuminate\Support\Facades\Route;
 use Livewire\Component;
 use Illuminate\Support\Str;
-use Laravel\Jetstream\Jetstream;
 use Tall\Cms\Models\Make;
 
 abstract class AbstractComponent extends Component
@@ -141,7 +140,7 @@ abstract class AbstractComponent extends Component
        
         if(is_null($component_name)) $component_name = $this->getName();
         $name = Str::beforeLast($component_name, '.');
-        $listRoute = Str::replace(['.create','.edit','.show','.delete'],'',$this->currentRouteName );
+        $listRoute = Str::replace(['.create','.edit','.show','.delete','.permissions'],'',$this->currentRouteName );
         $listPath = Str::afterLast($listRoute, 'admin.' );
         
         return Make::firstOrCreate(
@@ -192,10 +191,6 @@ abstract class AbstractComponent extends Component
 
     public function getPermissionProperty(){
         $permission = request()->route()->getName();
-        //    $permission = Str::afterLast($permission, '.');
-        //    $permissions = Jetstream::$permissions;
-        //    $permissions = array_combine($permissions,$permissions);
-        //    return data_get($permissions, $permission, Jetstream::$defaultPermissions[0]);
         return $permission;
     }
 
@@ -204,7 +199,4 @@ abstract class AbstractComponent extends Component
        return auth()->user();
     }
 
-    public function getTeamProperty(){
-       return $this->user->currentTeam;
-    }
 }
