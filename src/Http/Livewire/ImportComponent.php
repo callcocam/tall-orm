@@ -107,8 +107,9 @@ abstract class ImportComponent extends AbstractComponent
     public function setColumnsProperties()
     {
             $table = app($this->model->model)->getTable();
-
-            Config::set('database.default', app($this->model->model)->getConnectionName());
+            if($connectionName = app($this->model->model)->getConnectionName()){
+                Config::set('database.default', $connectionName );
+            }
 
             $columns = $this->makeSchema()->getTable($table)->getColumns()->toArray();
 
@@ -117,7 +118,7 @@ abstract class ImportComponent extends AbstractComponent
                     return false;
                 }
                 
-                if(in_array($column->getName(), ['updated_at'])){
+                if(in_array($column->getName(), $this->ignoreColumns())){
                     return false;
                 }
                 return $column->isNotNull();
@@ -133,7 +134,7 @@ abstract class ImportComponent extends AbstractComponent
                 if(is_array($column)){
                     return false;
                 }
-                if(in_array($column->getName(), ['updated_at'])){
+                if(in_array($column->getName(), $this->ignoreColumns())){
                     return false;
                 }
                 return true;
@@ -173,8 +174,12 @@ abstract class ImportComponent extends AbstractComponent
      */
     protected function makeSchema()
     {
+     
         return Schema::make();
     }
 
+    protected function ignoreColumns(){
+        return ['updated_at'];
+    }
 
 }
