@@ -117,7 +117,7 @@ abstract class ImportComponent extends AbstractComponent
                     return false;
                 }
                 
-                if(in_array($column->getName(), ['updated_at','slug'])){
+                if(in_array($column->getName(), ['updated_at'])){
                     return false;
                 }
                 return $column->isNotNull();
@@ -133,7 +133,7 @@ abstract class ImportComponent extends AbstractComponent
                 if(is_array($column)){
                     return false;
                 }
-                if(in_array($column->getName(), ['updated_at','slug'])){
+                if(in_array($column->getName(), ['updated_at'])){
                     return false;
                 }
                 return true;

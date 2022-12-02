@@ -140,7 +140,7 @@ abstract class AbstractComponent extends Component
        
         if(is_null($component_name)) $component_name = $this->getName();
         $name = Str::beforeLast($component_name, '.');
-        $listRoute = Str::replace(['.create','.edit','.show','.delete','.permissions'],'',$this->currentRouteName );
+        $listRoute = Str::replace($this->ignoreActions(),'',$this->currentRouteName );
         $listPath = Str::afterLast($listRoute, 'admin.' );
         
         return Make::firstOrCreate(
@@ -199,4 +199,9 @@ abstract class AbstractComponent extends Component
        return auth()->user();
     }
 
+
+    protected function ignoreActions()
+    {
+        return ['.create','.edit','.show','.delete'];
+    }
 }
