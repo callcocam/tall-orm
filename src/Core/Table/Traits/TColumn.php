@@ -53,12 +53,12 @@ trait TColumn
     /**
      * @var bool
      */
-    protected $searchable = true;
+    protected $searchable = false;
    
     /**
      * @var bool
      */
-    protected $sortable = true;
+    protected $sortable = false;
 
     /**
      * Array com as a~ções 
@@ -138,7 +138,7 @@ trait TColumn
 
    public function attributes()
    {
-      return [];
+      return $this->attributes;
    }
 
 

@@ -62,13 +62,13 @@ abstract class TableComponent extends AbstractComponent
 
     protected $paginationTheme = 'card';
 
-    public function setUp($currentRouteName=null)
+    public function setUp($currentRouteName=null, $moke = true)
     {
        $this->currentRouteName = $currentRouteName;
      
        $this->authorize($this->permission);
-    
-       $this->setConfigProperties($this->moke($this->getName()));
+       
+      if($moke) $this->setConfigProperties($this->moke($this->getName()));
        
        if($currentRouteName){
             session()->put('back', $currentRouteName);

@@ -223,7 +223,7 @@ abstract class FormComponent extends AbstractComponent
      * O resulta final será algo do tipo form_data.name='Informação vinda do banco'
      * Voce pode sobrescrever essas informações no component filho
      */
-    protected function setFormProperties($model = null, $currentRouteName=null)
+    protected function setFormProperties($model = null, $moke=true)
     {
         $this->authorize($this->permission);
 
@@ -237,7 +237,7 @@ abstract class FormComponent extends AbstractComponent
 
         $this->setUp(  Route::currentRouteName() );
         
-        $this->setConfigProperties(  $this->moke( $this->getName() ) );
+        if($moke) $this->setConfigProperties(  $this->moke( $this->getName() ) );
 
 
         /**

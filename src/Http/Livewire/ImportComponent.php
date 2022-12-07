@@ -50,6 +50,17 @@ abstract class ImportComponent extends AbstractComponent
      */
     public function refreshImport($data=[]){/** Ações aqui */}
      
+    /**
+     * Permite passar informações para a visualização
+     * Voce pode sobrescrever essas informações no component filho
+     */
+    protected function data(){
+
+        return array_merge(parent::data(), [
+            'ignoreColumns'=>$this->ignoreColumns()
+        ]);
+
+    }
      /**
      * Monta automaticamente o titulo da pagina
      * Voce pode sobrescrever essas informações no component filho
